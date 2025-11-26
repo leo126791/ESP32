@@ -1,154 +1,230 @@
-# Hi ESP - 語音關鍵詞檢測系統
+# Hi Lemon 語音助理
 
-基於 ESP32-S3 + INMP441 麥克風的智能語音關鍵詞檢測系統，支持 "Hi ESP" 喚醒詞檢測、自動錄音和雲端上傳。
+基於 ESP32-S3 的智能語音助理，使用 Edge Impulse 機器學習模型進行 "Hi Lemon" 喚醒詞檢測。
 
-## 🎯 主要功能
+## 特色功能
 
-- **持續監聽**：系統持續監聽環境聲音
-- **關鍵詞檢測**：檢測到 "Hi ESP" 關鍵詞時觸發
-- **自動錄音**：檢測到關鍵詞後自動錄音 3 秒
-- **雲端上傳**：錄音完成後自動上傳到指定服務器
-- **SD 卡備份**：支持本地 SD 卡存儲（可選）
-- **機器學習**：支持 ML 模型訓練以提升準確度
+- 🎤 **Edge Impulse 喚醒詞檢測**: 使用機器學習模型準確識別 "Hi Lemon"
+- 🗣️ **語音識別**: 自動將語音轉換為文字
+- 🤖 **AI 對話**: 整合 AI 服務進行智能回覆
+- 🔊 **TTS 播放**: 自動下載並播放 AI 語音回覆
+- 📍 **位置服務**: 自動獲取並上傳設備位置
+- 💾 **SD 卡支援**: 可選的本地音頻存儲
 
-## 🔧 硬件要求
+## 硬體需求
 
-### 必需組件
-- ESP32-S3 開發板（建議 8MB PSRAM）
-- INMP441 數字麥克風模組
-- USB 數據線
+### 主控板
+- ESP32-S3 (8MB PSRAM)
 
-### 可選組件
-- Micro SD 卡（用於本地存儲）
-- SD 卡模組
+### 麥克風
+- INMP441 數位麥克風
 
-## 📦 快速開始
+### 音頻輸出
+- MAX98357A I2S 音頻放大器
 
-### 1. 硬件連接
+### 可選
+- SD 卡模組（用於本地存儲）
 
-| INMP441 | ESP32-S3 |
-|---------|----------|
-| VDD     | 3.3V     |
-| GND     | GND      |
-| L/R     | GND      |
-| WS      | GPIO 38  |
-| SCK     | GPIO 39  |
-| SD      | GPIO 37  |
+## 接線圖
+
+### INMP441 麥克風
+```
+INMP441    →    ESP32-S3
+VDD        →    3.3V
+GND        →    GND
+L/R        →    GND (左聲道)
+WS         →    GPIO 4
+SCK        →    GPIO 5
+SD         →    GPIO 6
+```
+
+### MAX98357A 音頻輸出
+```
+MAX98357A  →    ESP32-S3
+VIN        →    5V
+GND        →    GND
+BCLK       →    GPIO 15
+LRC        →    GPIO 7
+DIN        →    GPIO 16
+SD         →    GPIO 17 (可選，用於控制開關)
+```
+
+### SD 卡模組（可選）
+```
+SD Card    →    ESP32-S3
+CS         →    GPIO 1
+MOSI       →    GPIO 2
+MISO       →    GPIO 8
+CLK        →    GPIO 3
+VCC        →    3.3V
+GND        →    GND
+```
+
+## 快速開始
+
+### 1. 環境設置
+
+確保已安裝 ESP-IDF v5.5+：
+```bash
+# Windows
+C:\Espressif\frameworks\esp-idf-v5.5.1\export.bat
+```
 
 ### 2. 配置 WiFi
 
-編輯 `main/hi_esp_keyword.c`：
+編輯 `main/hi_lemon_keyword.c`：
+```c
+#define WIFI_SSID       "your_wifi_ssid"
+#define WIFI_PASSWORD   "your_wifi_password"
+```
+
+### 3. 配置服務器
+
+編輯 `main/hi_lemon_keyword.c`：
+```c
+#define SERVER_URL      "https://your-server.com/esp32/audio"
+#define LOCATION_URL    "https://your-server.com/esp32/location"
+#define API_KEY         "your_api_key"
+```
+
+### 4. 編譯與燒錄
+
+```bash
+# 編譯
+build_lemon.bat
+
+# 或手動編譯
+idf.py build
+
+# 燒錄（替換 COM3 為你的端口）
+idf.py -p COM3 flash monitor
+```
+
+## 使用方法
+
+1. 上電後，系統會自動連接 WiFi
+2. 清楚地說 **"Hi Lemon"** 來喚醒設備
+3. 聽到提示音後，說出你的問題（3 秒內）
+4. 系統會自動上傳音頻並播放 AI 回覆
+
+## 專案結構
+
+```
+├── main/
+│   ├── hi_lemon_keyword.c      # 主程式（Edge Impulse 整合）
+│   ├── ei_wrapper.cpp           # Edge Impulse C++ 包裝器
+│   ├── hi_esp_audio.c           # 音頻輸出控制
+│   ├── audio_upload_optimized.c # 音頻上傳
+│   ├── wifi_manager.c           # WiFi 管理
+│   ├── location_service.c       # 位置服務
+│   └── sd_card_manager.c        # SD 卡管理
+├── components/
+│   └── lemong_wake/             # Edge Impulse 模型
+│       ├── edge-impulse-sdk/    # Edge Impulse SDK
+│       ├── model-parameters/    # 模型參數
+│       └── tflite-model/        # TensorFlow Lite 模型
+├── EDGE_IMPULSE_INTEGRATION.md  # Edge Impulse 整合指南
+├── EDGE_IMPULSE_SETUP.md        # Edge Impulse 設置指南
+├── GPIO_QUICK_REFERENCE.md      # GPIO 快速參考
+├── SD_CARD_TROUBLESHOOTING.md   # SD 卡故障排除
+└── TTS_PSRAM_PLAYBACK.md        # TTS PSRAM 播放說明
+```
+
+## Edge Impulse 模型
+
+本專案使用 Edge Impulse 訓練的音頻分類模型：
+
+- **輸入**: 16000 個樣本（1 秒，16kHz）
+- **輸出**: 2 個分類
+  - `hi lemon` - 喚醒詞
+  - `noise` - 背景噪音
+- **信心閾值**: 70%
+- **模型大小**: ~38 KB
+
+詳細資訊請參考 [EDGE_IMPULSE_INTEGRATION.md](EDGE_IMPULSE_INTEGRATION.md)
+
+## 記憶體使用
+
+- **Flash**: ~1 MB（包含模型）
+- **SRAM**: ~200 KB
+- **PSRAM**: 動態分配（TTS 緩衝區）
+- **模型 Arena**: 38 KB
+
+## 效能指標
+
+- **喚醒詞檢測延遲**: ~100ms
+- **錄音時長**: 3 秒
+- **上傳速度**: ~150 KB/s
+- **TTS 播放延遲**: ~2 秒
+
+## 調整參數
+
+### 檢測靈敏度
+
+在 `main/hi_lemon_keyword.c` 中調整：
 
 ```c
-#define WIFI_SSID       "你的WiFi名稱"
-#define WIFI_PASSWORD   "你的WiFi密碼"
-#define SERVER_URL      "http://your-server.com/api/audio"
+#define ENERGY_THRESHOLD        100000  // 降低 = 更靈敏
+#define DETECTION_CONFIDENCE    0.7     // 降低 = 更容易觸發
 ```
 
-### 3. 編譯和燒錄
+### 錄音時長
 
-```bash
-# Windows
-setup_idf.bat
-build.bat
-flash.bat
-
-# Linux/Mac
-. $HOME/esp/esp-idf/export.sh
-idf.py build
-idf.py -p /dev/ttyUSB0 flash monitor
+```c
+#define RECORD_TIME_MS          3000    // 毫秒
 ```
 
-## 📚 文檔
+## 故障排除
 
-- [硬件設置指南](docs/HARDWARE_SETUP.md) - INMP441、SD 卡、PSRAM 配置
-- [開發指南](docs/DEVELOPMENT.md) - 編譯、燒錄、調試
-- [問題排查](docs/TROUBLESHOOTING.md) - 常見問題解決方案
-- [ML 訓練指南](docs/ML_TRAINING.md) - 機器學習模型訓練
+### 喚醒詞檢測不靈敏
+1. 降低 `ENERGY_THRESHOLD`
+2. 降低 `DETECTION_CONFIDENCE`
+3. 檢查麥克風接線
+4. 確保環境安靜
 
-## 🎵 當前配置
+### 誤觸發
+1. 提高 `ENERGY_THRESHOLD`
+2. 提高 `DETECTION_CONFIDENCE`
 
-- **採樣率**: 16 kHz
-- **錄音時長**: 3 秒
-- **記憶體需求**: 96 KB
-- **檢測準確度**: 70-80%（能量檢測）/ 90-98%（ML 模型）
+### SD 卡無法讀取
+參考 [SD_CARD_TROUBLESHOOTING.md](SD_CARD_TROUBLESHOOTING.md)
 
-## 🛠️ 開發工具
+### 編譯錯誤
+1. 確保 ESP-IDF 版本 >= v5.5
+2. 確保 `esp-dsp` 組件已安裝
+3. 清理並重新編譯：`idf.py fullclean && idf.py build`
 
-### 批次腳本（Windows）
+## 開發指南
 
-```bash
-setup_idf.bat          # 設置 ESP-IDF 環境
-build.bat              # 編譯專案
-flash.bat              # 燒錄到設備
-monitor.bat            # 串口監控
-switch_mode.bat        # 切換工作模式
-```
+### 訓練自己的模型
 
-### 模式切換
+1. 前往 [Edge Impulse Studio](https://studio.edgeimpulse.com/)
+2. 收集 "Hi Lemon" 音頻樣本
+3. 訓練模型並導出為 ESP32 格式
+4. 替換 `components/lemong_wake/` 目錄
 
-```bash
-# 關鍵詞檢測模式（默認）
-switch_mode.bat keyword
+詳細步驟請參考 [EDGE_IMPULSE_SETUP.md](EDGE_IMPULSE_SETUP.md)
 
-# 數據收集模式（用於 ML 訓練）
-switch_mode.bat collect
+### 添加新功能
 
-# 測試模式
-switch_mode.bat test
-```
+1. 在 `main/` 目錄創建新的 `.c` 或 `.cpp` 文件
+2. 在 `main/CMakeLists.txt` 中添加源文件
+3. 重新編譯
 
-## 📊 性能指標
+## 授權
 
-| 項目 | 能量檢測 | ML 模型 |
-|------|----------|---------|
-| 準確度 | 70-80% | 90-98% |
-| 誤觸發率 | 中等 | 極低 |
-| 記憶體使用 | ~100KB | ~150KB |
-| 需要訓練 | 否 | 是 |
+本專案採用 MIT 授權。詳見 [LICENSE](LICENSE) 文件。
 
-## 🔍 故障排除
+## 致謝
 
-### WiFi 連接失敗
-- 確認 SSID 和密碼正確
-- 確保使用 2.4GHz WiFi（ESP32 不支持 5GHz）
+- [Edge Impulse](https://edgeimpulse.com/) - 機器學習平台
+- [ESP-IDF](https://github.com/espressif/esp-idf) - Espressif IoT 開發框架
+- [TensorFlow Lite Micro](https://www.tensorflow.org/lite/microcontrollers) - 嵌入式機器學習
 
-### 麥克風無聲音
-- 檢查接線是否正確
-- 確認 VDD 連接到 3.3V（不是 5V）
-- 確認 L/R 接地（選擇左聲道）
+## 聯絡方式
 
-### 檢測不準確
-- 調整 `ENERGY_THRESHOLD` 參數
-- 考慮訓練 ML 模型以提升準確度
+如有問題或建議，歡迎提交 Issue 或 Pull Request。
 
-詳細故障排除請參考 [TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md)
+---
 
-## 📁 專案結構
-
-```
-├── main/                    # 主程式碼
-│   ├── core/               # 核心功能
-│   ├── audio/              # 音頻處理
-│   ├── keyword/            # 關鍵詞檢測
-│   ├── storage/            # 存儲管理
-│   └── network/            # 網絡功能
-├── docs/                   # 文檔
-├── tools/                  # 工具腳本
-├── scripts/                # 批次腳本
-└── tests/                  # 測試文件
-```
-
-## 🤝 貢獻
-
-歡迎提交 Issue 和 Pull Request！
-
-## 📄 授權
-
-MIT License
-
-## 🔗 相關資源
-
-- [ESP-IDF 文檔](https://docs.espressif.com/projects/esp-idf/)
-- [INMP441 數據手冊](https://invensense.tdk.com/products/digital/inmp441/)
-- [ESP32-S3 技術規格](https://www.espressif.com/en/products/socs/esp32-s3)
+**注意**: 本專案需要有效的 Edge Impulse 授權才能使用模型。請確保遵守 Edge Impulse 的使用條款。
