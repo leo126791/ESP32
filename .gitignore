@@ -48,3 +48,7 @@ training_data/
 
 # Archive
 archive/
+
+# Edge Impulse 模型文件（體積大，不上傳）
+components/lemong_wake/
+components/lemong_wake_v12_backup/
